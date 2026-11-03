@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Auto-Clicker test bench</title>
+  <style>
+    :root {
+      --bg: #070b12;
+      --panel: #0d1420;
+      --panel2: #111a28;
+      --line: rgba(148, 163, 184, 0.17);
+      --text: #e6eefb;
+      --muted: #8b9bb4;
+      --mint: #5eead4;
+      --cyan: #67e8f9;
+      --amber: #fbbf24;
+      --red: #f87171;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html { color-scheme: dark; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 40px 24px 80px;
+      background:
+        radial-gradient(900px 500px at 15% -10%, rgba(94, 234, 212, 0.09), transparent 65%),
+        radial-gradient(800px 500px at 90% 0%, rgba(103, 232, 249, 0.07), transparent 60%),
+        var(--bg);
+      color: var(--text);
+      font: 14px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .wrap { max-width: 1040px; margin: 0 auto; }
+    header { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 10px; }
+    h1 { margin: 0; font-size: clamp(28px, 4vw, 44px); letter-spacing: -0.035em; line-height: 1; }
+    h1 span { color: var(--mint); }
+    .sub { color: var(--muted); max-width: 700px; margin: 8px 0 26px; font-size: 13px; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 22px; }
+    button {
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      color: var(--text);
+      background: var(--panel2);
+      font: 700 12px/1 ui-sans-serif, system-ui, sans-serif;
+      padding: 10px 14px;
+      cursor: pointer;
+    }
+    button:hover { border-color: rgba(103, 232, 249, 0.4); background: #172235; }
+    button:active { transform: translateY(1px); }
+    button.primary { color: #04121a; background: linear-gradient(180deg, #8ff5d0, #5eead4); border-color: rgba(94, 234, 212, 0.7); }
+    button.primary:hover { background: linear-gradient(180deg, #a7f8dc, #75f0dd); }
+    button.danger { color: #fca5a5; background: rgba(248, 113, 113, 0.08); border-color: rgba(248, 113, 113, 0.28); }
+    button:disabled { opacity: 0.35; cursor: not-allowed; }
+    code, .mono { font-family: var(--mono); font-size: 12px; }
+    code { color: #a5f3fc; background: rgba(103, 232, 249, 0.06); border: 1px solid rgba(103, 232, 249, 0.13); padding: 1px 5px; border-radius: 4px; }
+    .hint { color: #64748b; font-size: 11.5px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+    .card {
+      position: relative;
+      padding: 16px;
+      background: linear-gradient(180deg, rgba(17, 26, 40, 0.9), rgba(10, 16, 26, 0.95));
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+      overflow: hidden;
+    }
+    .card h2 { margin: 0 0 3px; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: #cbd8ea; }
+    .card p { margin: 0 0 13px; color: var(--muted); font-size: 11.5px; min-height: 34px; }
+    .target {
+      min-width: 160px;
+      padding: 13px 18px;
+      border: 1px solid rgba(94, 234, 212, 0.45);
+      border-radius: 10px;
+      color: #022019;
+      background: linear-gradient(180deg, #8ff5d0, #5eead4);
+      font: 800 14px/1 ui-sans-serif, system-ui, sans-serif;
+      letter-spacing: 0.01em;
+    }
+    .target:hover { background: linear-gradient(180deg, #a7f8dc, #75f0dd); }
+    .target small { display: block; margin-top: 5px; font: 600 10px/1 var(--mono); opacity: 0.65; }
+    .big { font: 700 26px/1 var(--mono); color: var(--cyan); margin: 8px 0; }
+    .statbox { margin-top: 12px; padding: 10px 11px; border: 1px solid var(--line); border-radius: 8px; background: rgba(4, 9, 16, 0.5); }
+    .statbox pre { margin: 0; white-space: pre-wrap; color: #9fb0c8; font: 10.5px/1.6 var(--mono); }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .kv { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; border-bottom: 1px dashed rgba(148, 163, 184, 0.1); font-size: 10.5px; }
+    .kv:last-child { border-bottom: 0; }
+    .kv b { font-family: var(--mono); color: #dbe7f5; font-weight: 600; }
+    .field { width: 100%; height: 34px; margin: 4px 0 8px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; background: #0a1220; color: var(--text); font: 12px var(--mono); outline: none; }
+    .field:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgba(103, 232, 249, 0.12); }
+    label.check { display: flex; align-items: center; gap: 8px; padding: 8px 0; color: #c4d2e5; font-size: 12px; cursor: pointer; }
+    input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--mint); }
+    .disabled-target { padding: 12px 16px; border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 9px; color: #64748b; background: #0a111c; font-weight: 700; font-size: 12px; }
+    .iframe-wrap { margin-top: 4px; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; background: #080e17; }
+    iframe { display: block; width: 100%; height: 108px; border: 0; background: #0a1220; }
+    .cross { height: 88px; }
+    .move-box { position: relative; height: 64px; overflow: hidden; border: 1px dashed rgba(251, 191, 36, 0.25); border-radius: 8px; margin-top: 8px; }
+    .mover { position: absolute; top: 14px; left: 0; padding: 9px 14px; border-radius: 8px; border: 1px solid rgba(251, 191, 36, 0.4); background: rgba(251, 191, 36, 0.1); color: #fde68a; font: 700 11px var(--mono); animation: slide 5s ease-in-out infinite alternate; }
+    @keyframes slide { from { transform: translateX(8px); } to { transform: translateX(calc(100% + 40px)); } }
+    .log { max-height: 150px; overflow: auto; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: #050a12; color: #8fa3be; font: 10px/1.7 var(--mono); }
+    .log div { padding: 1px 0; border-bottom: 1px solid rgba(148, 163, 184, 0.08); }
+    .log b { color: #a5f3fc; }
+    .flags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
+    .flag { font: 600 8.5px/1 var(--mono); letter-spacing: 0.05em; text-transform: uppercase; padding: 4px 6px; border-radius: 4px; border: 1px solid var(--line); color: #8b9bb4; }
+    .flag.ok { color: #6ee7b7; border-color: rgba(52, 211, 153, 0.3); background: rgba(52, 211, 153, 0.06); }
+    .flag.warn { color: #fcd34d; border-color: rgba(251, 191, 36, 0.3); background: rgba(251, 191, 36, 0.06); }
+    .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--line); color: #64748b; font-size: 11px; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; }
+    .footer b { color: #94a3b8; }
+    .load-state { color: #6ee7b7; font-size: 11px; margin-left: 4px; }
+    .load-state.err { color: #fca5a5; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Auto-Clicker <span>test bench</span></h1>
+  </header>
+  <p class="sub">
+    Local fixture for v1. Load the script below, pick a point, then run the engine. The primary target records every click timestamp so
+    CPS, interval mean and jitter can be measured. Synthetic events will report <code>isTrusted: false</code> — that is expected.
+  </p>
+
+  <div class="toolbar">
+    <button class="primary" id="loadAc">Load Auto-Clicker</button>
+    <button id="resetStats">Reset stats</button>
+    <button class="danger" id="unloadAc">Destroy HUD</button>
+    <span class="load-state" id="loadState"></span>
+  </div>
+
+  <div class="grid">
+    <section class="card">
+      <h2>Primary target</h2>
+      <p>Every click is logged with a high-resolution timestamp. Use this to check CPS and jitter.</p>
+      <button class="target" id="mainTarget">CLICK ME<small id="mainCount">0 clicks</small></button>
+      <div class="big" id="liveCps">0.00 <span style="font-size:11px;color:#8b9bb4">CPS average</span></div>
+      <div class="statbox">
+        <div class="grid2">
+          <div class="kv"><span>clicks</span><b id="statClicks">0</b></div>
+          <div class="kv"><span>interval mean</span><b id="statMean">—</b></div>
+          <div class="kv"><span>std dev</span><b id="statSd">—</b></div>
+          <div class="kv"><span>std dev %</span><b id="statSdPct">—</b></div>
+          <div class="kv"><span>span</span><b id="statSpan">—</b></div>
+          <div class="kv"><span>trusted</span><b id="statTrusted">—</b></div>
+        </div>
+      </div>
+      <div class="flags">
+        <span class="flag ok">counts every click</span>
+        <span class="flag">synthetic allowed</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Disabled target</h2>
+      <p>The mutation guard should pause if this is the resolved target.</p>
+      <button class="disabled-target" id="disabledTarget" disabled>DISABLED BUTTON</button>
+      <div class="statbox"><pre id="disabledLog">no clicks — disabled</pre></div>
+    </section>
+
+    <section class="card">
+      <h2>Checkbox</h2>
+      <p>Checks default actions and the click sequence.</p>
+      <label class="check"><input type="checkbox" id="checkTarget"> Toggle this checkbox</label>
+      <div class="statbox">
+        <div class="kv"><span>change events</span><b id="checkCount">0</b></div>
+        <div class="kv"><span>last state</span><b id="checkState">unchecked</b></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Shadow DOM target</h2>
+      <p>Button nested in an open shadow root. Resolution should report the shadow flag.</p>
+      <shadow-button id="shadowHost"></shadow-button>
+      <div class="statbox"><pre id="shadowLog">shadow clicks: 0</pre></div>
+    </section>
+
+    <section class="card">
+      <h2>Same-origin iframe</h2>
+      <p>Click the button inside the frame. The auto-clicker should descend into the iframe document.</p>
+      <div class="iframe-wrap">
+        <iframe id="sameFrame" title="Same-origin test target"></iframe>
+      </div>
+      <div class="statbox"><pre id="iframeLog">iframe clicks: 0</pre></div>
+    </section>
+
+    <section class="card">
+      <h2>Cross-origin iframe</h2>
+      <p>Expected to be unsupported by the browser. Locking here should warn, and Start should refuse.</p>
+      <div class="iframe-wrap"><iframe class="cross" id="crossFrame" src="https://example.org" title="Cross-origin test target"></iframe></div>
+      <div class="flags"><span class="flag warn">cannot dispatch inside</span></div>
+    </section>
+
+    <section class="card">
+      <h2>Moving target</h2>
+      <p>Useful for the mutation guard. Pick the moving button and watch the point resolve elsewhere.</p>
+      <div class="move-box"><button class="mover" id="mover">MOVING TARGET</button></div>
+      <div class="statbox"><pre id="moverLog">mover clicks: 0</pre></div>
+    </section>
+
+    <section class="card">
+      <h2>Typing guard</h2>
+      <p>Focus this input and type a letter. If that letter is your Start key, clicking must not start.</p>
+      <label class="sr-only" for="typeField">Typing guard field</label>
+      <input class="field" id="typeField" placeholder="Type a letter here…" autocomplete="off">
+      <div class="statbox"><pre id="keyLog">last keydown: —</pre></div>
+    </section>
+
+    <section class="card">
+      <h2>Event log</h2>
+      <p>Recent synthetic and page-side events.</p>
+      <div class="log" id="eventLog"></div>
+    </section>
+  </div>
+
+  <div class="footer">
+    <span>Auto-Clicker v1 fixture · <b id="fileHint">auto-clicker.js</b></span>
+    <span>F8 emergency stop · Esc cancels picking/recording</span>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  const TEST = {
+    mainClicks: 0,
+    mainTimes: [],
+    trustedFlags: [],
+    iframeClicks: 0,
+    shadowClicks: 0,
+    checkboxChanges: 0,
+    moverClicks: 0,
+    lastKey: null,
+    reset() {
+      this.mainClicks = 0;
+      this.mainTimes = [];
+      this.trustedFlags = [];
+      this.iframeClicks = 0;
+      this.shadowClicks = 0;
+      this.checkboxChanges = 0;
+      this.moverClicks = 0;
+      this.lastKey = null;
+    },
+    stats() {
+      const times = this.mainTimes;
+      const deltas = [];
+      for (let i = 1; i < times.length; i++) deltas.push(times[i] - times[i - 1]);
+      const n = deltas.length;
+      const span = n ? times[times.length - 1] - times[0] : 0;
+      const mean = n ? deltas.reduce((a, b) => a + b, 0) / n : 0;
+      const variance = n > 1 ? deltas.reduce((a, b) => a + (b - mean) ** 2, 0) / n : 0;
+      const sd = Math.sqrt(variance);
+      return {
+        clicks: times.length,
+        deltas: deltas.slice(-40),
+        span,
+        mean,
+        sd,
+        sdPct: mean ? (sd / mean) * 100 : 0,
+        cps: span > 0 ? (times.length - 1) / (span / 1000) : 0,
+        trusted: this.trustedFlags.slice(-1)[0],
+        iframeClicks: this.iframeClicks,
+        shadowClicks: this.shadowClicks,
+        checkboxChanges: this.checkboxChanges,
+        moverClicks: this.moverClicks,
+        lastKey: this.lastKey
+      };
+    }
+  };
+  window.AC_TEST = TEST;
+
+  const $ = (sel) => document.querySelector(sel);
+  const logEl = $('#eventLog');
+
+  function log(text, cls) {
+    const row = document.createElement('div');
+    row.textContent = text;
+    if (cls) row.style.color = cls;
+    logEl.prepend(row);
+    while (logEl.children.length > 80) logEl.lastChild.remove();
+  }
+
+  function fmt(n, digits) {
+    return Number.isFinite(n) ? n.toFixed(digits == null ? 1 : digits) : '—';
+  }
+
+  function updateStats() {
+    const s = TEST.stats();
+    $('#mainCount').textContent = `${TEST.mainClicks} click${TEST.mainClicks === 1 ? '' : 's'}`;
+    $('#statClicks').textContent = String(s.clicks);
+    $('#statMean').textContent = s.mean ? fmt(s.mean, 2) + ' ms' : '—';
+    $('#statSd').textContent = s.sd ? fmt(s.sd, 2) + ' ms' : '—';
+    $('#statSdPct').textContent = s.sdPct ? fmt(s.sdPct, 1) + '%' : '—';
+    $('#statSpan').textContent = s.span ? fmt(s.span, 0) + ' ms' : '—';
+    $('#statTrusted').textContent = s.trusted === undefined ? '—' : String(s.trusted);
+    $('#liveCps').innerHTML = `${fmt(s.cps, 2)} <span style="font-size:11px;color:#8b9bb4">CPS average</span>`;
+    $('#shadowLog').textContent = `shadow clicks: ${TEST.shadowClicks}`;
+    $('#iframeLog').textContent = `iframe clicks: ${TEST.iframeClicks}`;
+    $('#moverLog').textContent = `mover clicks: ${TEST.moverClicks}`;
+    $('#checkCount').textContent = String(TEST.checkboxChanges);
+    $('#checkState').textContent = $('#checkTarget').checked ? 'checked' : 'unchecked';
+  }
+
+  const main = $('#mainTarget');
+  main.addEventListener('click', (e) => {
+    TEST.mainClicks++;
+    TEST.mainTimes.push(performance.now());
+    TEST.trustedFlags.push(e.isTrusted);
+    if (TEST.mainTimes.length > 8000) TEST.mainTimes.shift();
+    log(`main click #${TEST.mainClicks} · isTrusted=${e.isTrusted} · ${Math.round(performance.now())}`);
+    updateStats();
+  });
+
+  $('#disabledTarget').addEventListener('click', () => {
+    $('#disabledLog').textContent = 'UNEXPECTED: disabled button received a click';
+  });
+
+  $('#checkTarget').addEventListener('change', () => {
+    TEST.checkboxChanges++;
+    log(`checkbox change #${TEST.checkboxChanges} · checked=${$('#checkTarget').checked}`);
+    updateStats();
+  });
+
+  class ShadowButton extends HTMLElement {
+    constructor() {
+      super();
+      this.count = 0;
+      const root = this.attachShadow({ mode: 'open' });
+      root.innerHTML = '<style>button{padding:11px 15px;border:1px solid rgba(52,211,153,.45);border-radius:8px;background:rgba(52,211,153,.1);color:#a7f3d0;font:700 12px system-ui;cursor:pointer}button:hover{background:rgba(52,211,153,.18)}</style><button id="sb">SHADOW TARGET <span id="sn">0</span></button>';
+      root.getElementById('sb').addEventListener('click', (e) => {
+        this.count++;
+        root.getElementById('sn').textContent = this.count;
+        TEST.shadowClicks = this.count;
+        log(`shadow click #${this.count} · isTrusted=${e.isTrusted}`);
+        updateStats();
+      });
+    }
+  }
+  customElements.define('shadow-button', ShadowButton);
+
+  $('#mover').addEventListener('click', () => {
+    TEST.moverClicks++;
+    log(`mover click #${TEST.moverClicks}`);
+    updateStats();
+  });
+
+  // Build the same-origin frame in script so its markup is not fighting
+  // with HTML attribute quoting. The frame has no script of its own; the
+  // parent attaches the click handler once the frame has loaded.
+  const sameFrame = $('#sameFrame');
+  sameFrame.addEventListener('load', () => {
+    try {
+      const doc = sameFrame.contentDocument;
+      const btn = doc && doc.getElementById('b');
+      const num = doc && doc.getElementById('n');
+      if (!btn || !num) return;
+      let count = 0;
+      btn.addEventListener('click', (e) => {
+        count++;
+        num.textContent = count;
+        TEST.iframeClicks = count;
+        log(`iframe click #${count} · isTrusted=${e.isTrusted}`);
+        updateStats();
+      });
+    } catch (err) {
+      log('iframe setup failed: ' + err.name);
+    }
+  });
+  sameFrame.srcdoc = `<!doctype html>
+    <html>
+      <head>
+        <style>
+          html, body { height: 100%; margin: 0; display: grid; place-items: center; background: #0a1220; color: #e6eefb; font: 12px system-ui, sans-serif; }
+          button { padding: 11px 15px; border: 1px solid rgba(103,232,249,.45); border-radius: 8px; background: #132233; color: #a5f3fc; font: 700 12px system-ui; cursor: pointer; }
+          button:hover { background: #1a2c42; }
+        </style>
+      </head>
+      <body>
+        <button id="b">IFRAME TARGET <span id="n">0</span></button>
+      </body>
+    </html>`;
+
+  $('#typeField').addEventListener('keydown', (e) => {
+    TEST.lastKey = { key: e.key, code: e.code, defaultPrevented: e.defaultPrevented };
+    $('#keyLog').textContent = `keydown: ${e.key} · code ${e.code}`;
+    log(`typing guard keydown: ${e.key} / ${e.code}`);
+  });
+
+  window.addEventListener('message', (event) => {
+    const data = event.data;
+    if (!data || data.type !== 'iframe-click') return;
+    TEST.iframeClicks = data.count;
+    log(`iframe click #${data.count} · isTrusted=${data.trusted}`);
+    updateStats();
+  });
+
+  function loadAutoClicker() {
+    const state = $('#loadState');
+    state.classList.remove('err');
+    state.textContent = 'loading…';
+    const script = document.createElement('script');
+    script.src = 'auto-clicker.js?v=' + Date.now();
+    script.onload = () => {
+      state.textContent = 'loaded';
+      log('auto-clicker.js loaded');
+    };
+    script.onerror = () => {
+      state.textContent = 'failed to load auto-clicker.js';
+      state.classList.add('err');
+      log('auto-clicker.js failed to load');
+    };
+    document.documentElement.appendChild(script);
+  }
+
+  $('#loadAc').addEventListener('click', loadAutoClicker);
+  $('#unloadAc').addEventListener('click', () => {
+    if (window.__AC_V1__ && typeof window.__AC_V1__.destroy === 'function') {
+      window.__AC_V1__.destroy();
+      $('#loadState').textContent = 'destroyed';
+      log('auto-clicker destroyed via API');
+    } else {
+      log('no auto-clicker instance present');
+    }
+  });
+  $('#resetStats').addEventListener('click', () => {
+    TEST.reset();
+    $('#disabledLog').textContent = 'no clicks — disabled';
+    $('#keyLog').textContent = 'last keydown: —';
+    logEl.innerHTML = '';
+    updateStats();
+    log('stats reset');
+  });
+
+  // Useful for automation and manual checks in DevTools.
+  window.AC_TEST.load = loadAutoClicker;
+  window.AC_TEST.resetUi = () => {
+    TEST.reset();
+    updateStats();
+  };
+
+  updateStats();
+  log('fixture ready — load the script to begin');
+})();
+</script>
+</body>
+</html>
