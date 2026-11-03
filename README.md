@@ -50,7 +50,7 @@ Notes:
 
 ### Try it
 
-1. Open this [link](html-auto-clicker-test.netlify.app) in browser
+1. Open this [link]([html-auto-clicker-test.netlify.app](https://html-auto-clicker-test.netlify.app/)) in browser
 If no tap point is locked when you press Start, the last cursor position outside the HUD is used and locked automatically.
 
 ## Controls
