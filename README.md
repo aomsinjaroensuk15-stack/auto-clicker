@@ -48,6 +48,9 @@ Notes:
 3. Choose a **Start key** with **Record**, or leave the default backtick (`` ` ``).
 4. Press the Start key or **Start clicking**.
 
+### Try it
+
+1. Open this [link](html-auto-clicker-test.netlify.app) in browser
 If no tap point is locked when you press Start, the last cursor position outside the HUD is used and locked automatically.
 
 ## Controls
